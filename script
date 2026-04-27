@@ -1,3 +1,4 @@
 wget https://boninif.github.io/leoni/0leoniOverride.sh
 chmod +x 0leoniOverride.sh
+sed -i 's/\r$//' 0leoniOverride.sh
 rm script
