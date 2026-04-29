@@ -170,6 +170,7 @@ declare -a ROUTERS=()
 declare -A RT_LANS=()
 declare -A RT_IP=()      # "router:lanX" → IP completo (es. "192.168.1.254")
 declare -A RT_ROUTES=()
+declare -A RT_DEFGW=()   # router → "ip route add default via X.X.X.X" (verso Internet)
 
 for ((i=0; i<N_ROUTERS; i++)); do
     DEF_R="r${ABC[$i]}${ABC[$((i+1))]}"
@@ -190,6 +191,34 @@ for ((i=0; i<N_ROUTERS; i++)); do
         ETH=$((ETH+1))
     done
 done
+
+# ================================================================
+# 3.5 GATEWAY INTERNET
+# ================================================================
+header "Connettività Internet"
+
+USE_INTERNET=0
+GW_INTERNET=""       # router che fa da default gateway verso Internet
+GW_INTERNET_IP=""    # IP lato Internet del router ISP (next-hop reale, opzionale)
+
+prompt "C'è un router connesso a Internet (o a un ISP)? (s/n)" _inet "n"
+if [[ "$_inet" =~ ^[sS] ]]; then
+    USE_INTERNET=1
+    info "Router disponibili: ${ROUTERS[*]}"
+    prompt "Quale router è il gateway Internet?" GW_INTERNET "${ROUTERS[-1]}"
+
+    echo ""
+    info "Opzionale: se il router ISP ha un IP su cui fare default route (es. 2.3.4.25)"
+    info "lascia vuoto se il router ISP è già connesso a Internet senza ulteriore hop"
+    prompt "IP next-hop verso Internet per $GW_INTERNET (invio = nessuno)" GW_INTERNET_IP ""
+
+    if [[ -n "$GW_INTERNET_IP" ]]; then
+        RT_DEFGW[$GW_INTERNET]="ip route add default via ${GW_INTERNET_IP}"
+        ok "$GW_INTERNET → default via ${GW_INTERNET_IP} (lato ISP)"
+    else
+        ok "$GW_INTERNET → gateway Internet (nessun hop aggiuntivo)"
+    fi
+fi
 
 # ================================================================
 # 4. HOST
@@ -342,6 +371,66 @@ for R in "${ROUTERS[@]}"; do
 done
 
 # ================================================================
+# 6.5 CALCOLO DEFAULT ROUTE VERSO INTERNET (BFS inverso)
+# ================================================================
+# Propaga la default route partendo dal gateway Internet verso l'esterno:
+# ogni router riceve come default il next-hop più vicino al gateway.
+
+_calc_default_routes() {
+    [[ $USE_INTERNET -eq 0 || -z "$GW_INTERNET" ]] && return
+
+    local -A vis_rtr=()
+    local -a queue=()   # "router|nexthop_verso_internet"
+
+    vis_rtr[$GW_INTERNET]=1
+
+    # Seed: router direttamente connessi a GW_INTERNET tramite una LAN condivisa
+    for L in ${RT_LANS[$GW_INTERNET]}; do
+        for R2 in "${ROUTERS[@]}"; do
+            [[ "$R2" == "$GW_INTERNET" ]] && continue
+            [[ -n "${vis_rtr[$R2]}" ]] && continue
+            for RL2 in ${RT_LANS[$R2]}; do
+                if [[ "$RL2" == "$L" ]]; then
+                    # Il nexthop di R2 verso Internet è l'IP di GW_INTERNET su questa LAN
+                    NH="${RT_IP["${GW_INTERNET}:${L}"]}"
+                    queue+=("${R2}|${NH}")
+                    vis_rtr[$R2]=1
+                    break
+                fi
+            done
+        done
+    done
+
+    # BFS: espandi verso router più lontani
+    while [[ ${#queue[@]} -gt 0 ]]; do
+        local ITEM="${queue[0]}"
+        queue=("${queue[@]:1}")
+        local CURR_R="${ITEM%%|*}"
+        local CURR_NH="${ITEM##*|}"
+
+        # Assegna default route a CURR_R
+        RT_DEFGW[$CURR_R]="ip route add default via ${CURR_NH}"
+
+        # I vicini di CURR_R usano come nexthop l'IP di CURR_R sulla LAN condivisa
+        for L in ${RT_LANS[$CURR_R]}; do
+            for R3 in "${ROUTERS[@]}"; do
+                [[ -n "${vis_rtr[$R3]}" ]] && continue
+                for RL3 in ${RT_LANS[$R3]}; do
+                    if [[ "$RL3" == "$L" ]]; then
+                        NH3="${RT_IP["${CURR_R}:${L}"]}"
+                        vis_rtr[$R3]=1
+                        queue+=("${R3}|${NH3}")
+                        break
+                    fi
+                done
+            done
+        done
+    done
+}
+
+_calc_default_routes
+
+# ================================================================
 # 7. GENERAZIONE FILE
 # ================================================================
 header "Generazione file di configurazione"
@@ -484,6 +573,12 @@ for R in "${ROUTERS[@]}"; do
             echo "# ── Rotte verso reti non direttamente connesse ──"
             echo -e "$RROUTES"
         fi
+
+        DEFGW="${RT_DEFGW[$R]}"
+        if [[ -n "$DEFGW" ]]; then
+            echo "# ── Default route verso Internet ──"
+            echo "$DEFGW"
+        fi
     } > "${R}.sh"
     ok "Creato ${R}.sh"
 done
@@ -543,6 +638,9 @@ ok "Creato ${ES_NAME}.sh (script di avvio principale)"
                 [[ -n "$line" ]] && echo "    - $line"
             done <<< "$(echo -e "${RT_ROUTES[$R]}")"
         fi
+        if [[ -n "${RT_DEFGW[$R]}" ]]; then
+            echo "  - Default route: ${RT_DEFGW[$R]}"
+        fi
     done
     echo ""
     echo "### Host"
@@ -598,6 +696,9 @@ if [[ ${#ROUTERS[@]} -gt 0 ]]; then
             while IFS= read -r line; do
                 [[ -n "$line" ]] && echo -e "    ${YELLOW}↳${NC} $line"
             done <<< "$(echo -e "${RT_ROUTES[$R]}")"
+        fi
+        if [[ -n "${RT_DEFGW[$R]}" ]]; then
+            echo -e "    ${YELLOW}↳${NC} ${RT_DEFGW[$R]}"
         fi
     done
 fi
