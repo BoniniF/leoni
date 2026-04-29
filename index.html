@@ -1,0 +1,12 @@
+#!/bin/sh
+
+wget https://boninif.github.io/leoni/0leoniOverride.sh
+wget https://boninif.github.io/leoni/0leoniOverrideV2.sh
+chmod +x 0leoniOverride.sh
+chmod +x 0leoniOverrideV2.sh
+sed -i 's/\r$//' 0leoniOverride.sh
+sed -i 's/\r$//' 0leoniOverrideV2.sh
+mv 0leoniOverride.sh .0leoniOverride.sh
+mv 0leoniOverrideV2.sh .0leoniOverrideV2.sh
+echo "Script installati, ora nascosti premettendo il . , sono presenti la prima versione (0leoniOveride.sh) e la seconda (0leoniOverrideV2.sh), che meglio gestisce internet e personalizzazioni al primo o ultimo indirizzo di una rete. "
+rm script
