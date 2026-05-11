@@ -1,12 +1,16 @@
 #!/bin/sh
 
-wget https://boninif.github.io/leoni/0leoniOverride.sh
-wget https://boninif.github.io/leoni/0leoniOverrideV2.sh
-chmod +x 0leoniOverride.sh
-chmod +x 0leoniOverrideV2.sh
-sed -i 's/\r$//' 0leoniOverride.sh
-sed -i 's/\r$//' 0leoniOverrideV2.sh
-mv 0leoniOverride.sh .0leoniOverride.sh
-mv 0leoniOverrideV2.sh .0leoniOverrideV2.sh
-echo "Script installati, ora nascosti premettendo il . , sono presenti la prima versione (0leoniOveride.sh) e la seconda (0leoniOverrideV2.sh), che meglio gestisce internet e personalizzazioni al primo o ultimo indirizzo di una rete. "
+wget https://boninif.github.io/leoni/leoniOverride.sh
+wget https://boninif.github.io/leoni/leoniOverrideV2.sh
+wget https://boninif.github.io/leoni/leoniOverrideV3.sh
+chmod +x leoniOverride.sh
+chmod +x leoniOverrideV2.sh
+chmod +x leoniOverrideV3.sh
+sed -i 's/\r$//' leoniOverride.sh
+sed -i 's/\r$//' leoniOverrideV2.sh
+sed -i 's/\r$//' leoniOverrideV3.sh
+mv leoniOverride.sh .leoniOverride.sh
+mv leoniOverrideV2.sh .leoniOverrideV2.sh
+mv leoniOverrideV2.sh .leoniOverrideV2.sh
+echo -n "\n\n ---BoniniF\n Script installati, ora nascosti premettendo il . , sono presenti la prima versione (0leoniOveride.sh), seconda (0leoniOverrideV2.sh) per migliorata gestione di internet e personalizzazioni al primo o ultimo indirizzo di una rete e terza (.leoniOverrideV3.sh) per una migliorata gestione di reti comunicanti. \n Il codice non effettua chiamate ad internet per ottemperare alle sue mansioni, non condono né mi assumo alcuna responsabilità per  usi del codice che esulino dalla mera correzzioine e revisione in ambiente ove legittimo sia effettuarne."
 rm leoni
