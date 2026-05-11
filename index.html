@@ -12,6 +12,19 @@ sed -i 's/\r$//' leoniOverrideV3.sh
 mv leoniOverride.sh .leoniOverride.sh
 mv leoniOverrideV2.sh .leoniOverrideV2.sh
 mv leoniOverrideV3.sh .leoniOverrideV3.sh
-printf "\n\n ---BoniniF\n Script installati, ora nascosti premettendo il . , sono presenti la prima versione (0leoniOveride.sh), seconda (0leoniOverrideV2.sh) per migliorata gestione di internet e personalizzazioni al primo o ultimo indirizzo di una rete e terza (.leoniOverrideV3.sh) per una migliorata gestione di reti comunicanti. \n Il codice non effettua chiamate ad internet per ottemperare alle sue mansioni, non condono né mi assumo alcuna responsabilità per  usi del codice che esulino dalla mera correzzioine e revisione in ambiente ove legittimo sia effettuarne.\n----\n"
+
+
+RESET="$(printf '\033[0m')"
+
+if [ -t 1 ]; then
+  GREEN_DARK="$(printf '\033[38;2;16;51;10m')"
+  else
+    GREEN_DARK="$(printf '\033[32m')"
+    fi
+
+
+
+printf "%s\n\n---BoniniF\n Script installati, ora nascosti premettendo il . , sono presenti la prima versione (0leoniOveride.sh), seconda (0leoniOverrideV2.sh) per migliorata gestione di internet e personalizzazioni al primo o ultimo indirizzo di una rete e terza (.leoniOverrideV3.sh) per una migliorata gestione di reti comunicanti. \n Il codice non effettua chiamate ad internet per ottemperare alle sue mansioni, non condono né mi assumo alcuna responsabilità per  usi del codice che esulino dalla mera correzzioine e revisione in ambiente ove legittimo sia effettuarne.\n----\n%s" "$GREEN_DARK" "$RESET"
+
 echo ""
 rm leoni
